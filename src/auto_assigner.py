@@ -551,8 +551,8 @@ class AutoAssigner:
 
 if __name__ == "__main__":
     SCOPES = ["https://mail.google.com/"]
-    our_email = "ebservices@cosmosinsurance.com"
-    LIST_OF_EMPLOYEE_LABELS = ["Prakash Pantha", "Sana Faisal", "Vidyalaxmi"]
+    our_email = ""
+    LIST_OF_EMPLOYEE_LABELS = []
     UAE_TZ = pytz.timezone("Asia/Dubai")
 
     try:
