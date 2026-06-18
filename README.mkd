@@ -1,0 +1,116 @@
+# Email Auto-Assigner Documentation
+
+## What Does This Tool Do?
+
+This tool monitors a Gmail inbox and automatically sorts incoming emails to the right employee without anyone having to read and assign them manually.
+
+When a new email arrives, the tool reads it, figures out if it's an insurance-related request, and then assigns it to one of your employees by applying a label to it in Gmail. That label then appears on the email in the inbox, just like any other Gmail label you'd apply by hand.
+
+---
+
+## What Counts as a Request?
+
+The tool uses AI (ChatGPT) to read each email and decide whether it is a request related to medical insurance. It looks for any of the following:
+
+- Adding or removing someone from an insurance plan
+- Refunds or cancellations
+- Amendments or corrections to existing policies
+- Requests for active member lists
+- COC requests
+- ECard or ICP requests
+
+If the email is about any of these, it gets assigned. If it isn't (for example, a general enquiry or a promotional email), it is ignored.
+
+---
+
+## How Are Emails Assigned?
+
+### Fresh Emails
+
+If a brand new email comes in that hasn't been part of any previous conversation, the tool assigns it to an employee in a rotating order. For example, if you have three employees: John, Jane, and Jonathan, the assignments would go like this:
+
+```
+Email 1 → John Employee
+Email 2 → Jane Employee
+Email 3 → Jonathan Employee
+Email 4 → John Employee
+Email 5 → Jane Employee
+...and so on
+```
+
+This is called **round-robin**. Everyone gets an equal share.
+
+### Reply Emails
+
+If an email is a reply to an older conversation, the tool tries to assign it to whoever handled that conversation before. It does this in two ways:
+
+1. **Check the previous label**: It looks at the older emails in the thread to see if an employee was already assigned
+2. **Check the email signature**: It reads the signature of the last email your team sent in that thread and extracts the employee's name from it
+
+If both point to an employee, **the signature takes priority**, as it is considered more reliable. If only one is found, that one is used. If neither works, it falls back to round-robin.
+
+---
+
+## How Does It Know Who Is Who?
+
+Each employee needs to have a **label set up in Gmail** with their name. Under that label, there must be two sub-labels:
+
+- **NEW REQUEST**: Applied when a fresh request comes in for that employee
+- **ACTIONED**: Applied manually by the employee (or team) once they have dealt with the request
+
+For example, for an employee named John Employee, Gmail should have:
+
+```
+John Employee
+├── John Employee/NEW REQUEST
+└── John Employee/ACTIONED
+```
+
+The tool reads these labels to understand who has been assigned what, and whether something has already been dealt with.
+
+---
+
+## What Gets Skipped?
+
+The tool will skip an email (and do nothing to it) if any of the following are true:
+
+- It already has a **NEW REQUEST** label on it, meaning it was already assigned in a previous run
+- Any email in the same conversation thread has a **CC EMAILS** label on it, these are treated as carbon-copy emails that don't need to be assigned
+- The AI determines it is **not an insurance-related request**
+
+---
+
+## When Does It Run?
+
+Each time the tool is started, it checks all emails that arrived in the **last 1.5 hours**. It runs continuously on its own based on a scheduler.
+
+---
+
+## What Happens After Assignment?
+
+At the end of each run, the tool prints a summary showing which emails were assigned to which employee. For example:
+
+```
+John Employee (2 assigned):
+  [NEW]   Medical Insurance Addition - John Smith
+  [REPLY] Re: Insurance Deletion Request
+
+Jane Employee (1 assigned):
+  [NEW]   Add employee to insurance plan
+```
+
+`[NEW]` means it was a fresh email. `[REPLY]` means it was part of an existing conversation.
+
+---
+
+## Important Things to Know
+
+- **Labels must be set up in Gmail before running the tool.** If an employee's labels are missing or named incorrectly, the tool will show an error and stop.
+- **The employee names entered when starting the tool must match the Gmail label names exactly**. This includes spacing (upper/lower case doesn't matter).
+- **Assignments are not saved between runs.** The summary shown at the end is only for that session. Each new run starts fresh.
+- **The tool does not delete or move emails.** It only adds labels to them.
+
+---
+
+*Made by Ronak Punjabi*
+*Given to Harish Daswani*
