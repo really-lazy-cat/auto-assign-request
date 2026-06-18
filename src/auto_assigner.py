@@ -551,8 +551,11 @@ class AutoAssigner:
 
 if __name__ == "__main__":
     SCOPES = ["https://mail.google.com/"]
-    our_email = ""
-    LIST_OF_EMPLOYEE_LABELS = []
+    our_email = "ebservices@cosmosinsurance.com"
+    LIST_OF_EMPLOYEE_LABELS = ["Prakash Pantha", "Sana Faisal", "Vidyalaxmi"]
+    MAX_RESTARTS = 5
+    restart_count = 0
+    RESTART_COUNT_FILE = "sensitive_info/restart_count.json"
     UAE_TZ = pytz.timezone("Asia/Dubai")
 
     try:
@@ -571,17 +574,37 @@ if __name__ == "__main__":
             if name in cached:
                 auto_assigner.assignments[name] = cached[name]
 
+    def load_restart_count() -> int:
+        try:
+            with open(RESTART_COUNT_FILE) as f:
+                return json.load(f).get("count", 0)
+        except Exception:
+            return 0
+        
+    def save_restart_count(count: int) -> None:
+        with open(RESTART_COUNT_FILE, "w") as f:
+            json.dump({"count": count}, f) 
+
     def run_assign():
+        global restart_count
         try:
             logger.info("--- Starting assignment run ---")
             auto_assigner.service = gmail_authenticate()
             auto_assigner.identify_and_assign()
             auto_assigner.print_assignments()
             save_assignments(auto_assigner.assignments)
+            restart_count = 0
+            save_restart_count(0)
             logger.info("--- Assignment run complete ---")
         except Exception as e:
+            restart_count += 1
+            save_restart_count(restart_count)
+            if restart_count >= MAX_RESTARTS:
+                logger.error("Too many restarts. Going to sleep...")
+                raise SystemError(1)
             logger.error(f"Assignment run failed: {e}", exc_info=True)
             logger.warning("Saving assignments and restarting script to recover...")
+            time.sleep(30 * restart_count)
             save_assignments(auto_assigner.assignments)
             os.execv(sys.executable, [sys.executable] + sys.argv)
 
